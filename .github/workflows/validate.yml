@@ -3,8 +3,6 @@
 # Scope: this repo only. Wingman-repo paths referenced by skills (pnpm scripts,
 # specs/, .specify/) CANNOT be verified here and are deliberately out of scope —
 # the wingman repo's check:docs/check:agents gates own those.
-# `claude plugin validate` is not run as a gate (CLI availability in CI
-# unproven); the manifest checks below cover the structural basics.
 name: validate
 
 on:
@@ -21,6 +19,15 @@ jobs:
 
       - name: Version consistency (bumpVersion.sh --check)
         run: sh bumpVersion.sh --check
+
+      - name: Official plugin validation (claude plugin validate --strict)
+        # The same check `claude plugin validate` runs locally in ~2s. If this
+        # step proves unable to run headless in CI, replace it with a comment
+        # recording WHAT failed — never silently drop it.
+        run: |
+          set -eu
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate ./plugins/wingman --strict
 
       - name: Bump-on-change
         env:
@@ -78,23 +85,79 @@ jobs:
           done
           exit $fail
 
-      - name: Safety language present
+      - name: Safety language present (coverage-asserted)
         # Wingman is advisory-only aviation software. The skills and roles here
         # carry its load-bearing safety text; an edit that drops it must fail
-        # CI, because the wingman repo can no longer see these files. Mirrors
-        # the advisory-only greps in wingman's own ci.yml.
+        # CI, because the wingman repo can no longer see these files. The
+        # manifest below is COVERAGE-ASSERTED: every role .md and every
+        # SKILL.md must have an entry, so a newly added file fails CI until
+        # someone consciously decides what safety text it must carry.
         run: |
           set -eu
-          grep -q "SAFETY AND DATA GUARDRAIL" plugins/wingman/agents/mech-executor.md
-          grep -qi "advisory-only" plugins/wingman/skills/wingman-review/SKILL.md
-          grep -q "callsigns" plugins/wingman/agents/Explore.md
-          grep -q "callsigns" plugins/wingman/agents/scout.md
-          grep -q "exactly" plugins/wingman/agents/verifier.md
-          grep -qi "advisory-only" plugins/wingman/skills/handoff/SKILL.md
-          grep -qi "safety" plugins/wingman/skills/publish-harness/SKILL.md
-          grep -qi "advisory-only" plugins/wingman/agents/deep-thinker.md
-          grep -q "PROPOSE only" plugins/wingman/agents/deep-thinker.md
-          grep -qi "safety" plugins/wingman/skills/deep-think/SKILL.md
+          python3 - <<'EOF'
+          import pathlib, sys
+          MANIFEST = {
+              'plugins/wingman/agents/Explore.md': 'callsigns',
+              'plugins/wingman/agents/scout.md': 'callsigns',
+              'plugins/wingman/agents/mech-executor.md': 'SAFETY AND DATA GUARDRAIL',
+              'plugins/wingman/agents/verifier.md': 'exactly',
+              'plugins/wingman/agents/deep-thinker.md': 'PROPOSE only',
+              'plugins/wingman/skills/wingman-review/SKILL.md': 'advisory-only',
+              'plugins/wingman/skills/deep-think/SKILL.md': 'safety',
+              'plugins/wingman/skills/handoff/SKILL.md': 'advisory-only',
+              'plugins/wingman/skills/resumeFromHandoff/SKILL.md': 'provenance',
+              'plugins/wingman/skills/docs-update/SKILL.md': 'safety',
+              'plugins/wingman/skills/publish-harness/SKILL.md': 'safety',
+          }
+          fail = False
+          for file, pattern in MANIFEST.items():
+              path = pathlib.Path(file)
+              if not path.exists():
+                  print(f"::error::{file} is in the safety-language manifest but does not exist — remove the entry or restore the file")
+                  fail = True
+                  continue
+              if pattern.lower() not in path.read_text(encoding='utf-8').lower():
+                  print(f"::error::{file} no longer contains its required safety text: '{pattern}'")
+                  fail = True
+          present = [str(p) for pat in ('plugins/*/agents/*.md', 'plugins/*/skills/*/SKILL.md')
+                     for p in pathlib.Path('.').glob(pat)]
+          for file in present:
+              if file not in MANIFEST:
+                  print(f"::error::{file} has no entry in the safety-language manifest — add one (this step is coverage-asserted so new files cannot silently skip it)")
+                  fail = True
+          sys.exit(1 if fail else 0)
+          EOF
+
+      - name: wingman-review workflow script parses
+        # The ~90-line embedded Workflow script in wingman-review has already
+        # produced one real defect (2026-07-22, stringified args -> silent
+        # false-negative review). Extract the fenced js block and at least
+        # prove it PARSES as ESM (node --check); the workflow globals
+        # (agent/pipeline/args) are runtime-provided, so parse is the
+        # strongest offline check available.
+        run: |
+          set -eu
+          python3 - <<'EOF'
+          import pathlib, re, subprocess, sys, tempfile
+          text = pathlib.Path('plugins/wingman/skills/wingman-review/SKILL.md').read_text(encoding='utf-8')
+          blocks = re.findall(r'```js\n(.*?)```', text, re.S)
+          if len(blocks) != 1:
+              print(f"::error::expected exactly one ```js block in wingman-review/SKILL.md, found {len(blocks)}")
+              sys.exit(1)
+          # The Workflow runtime treats the script as an async function body
+          # (top-level `return`/`await` are legal) with `export const meta`
+          # handled specially. Mirror that dialect before parsing.
+          body = re.sub(r'^export ', '', blocks[0], count=1, flags=re.M)
+          wrapped = 'async function __workflow_check() {\n' + body + '\n}\n'
+          with tempfile.NamedTemporaryFile(mode='w', suffix='.mjs', delete=False) as f:
+              f.write(wrapped)
+              path = f.name
+          result = subprocess.run(['node', '--check', path], capture_output=True, text=True)
+          if result.returncode != 0:
+              print(f"::error::wingman-review workflow script fails node --check:\n{result.stderr}")
+              sys.exit(1)
+          print('wingman-review workflow script parses (async-body dialect)')
+          EOF
 
       - name: Dead references
         run: |

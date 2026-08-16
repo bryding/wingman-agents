@@ -67,7 +67,15 @@ and keep Wingman's safety language intact — advisory-only wording and the
 never-invent-operational-facts rules in role prompts are load-bearing, not
 boilerplate.
 
-## 3. Publish
+## 3. Test before publishing
+
+`claude plugin validate <checkout>/plugins/wingman --strict` checks structure in ~2s.
+For a behavioral check, `claude --plugin-dir <checkout>/plugins/wingman` starts a session
+with the EDITED plugin loaded — it shadows the installed copy for that session only, so
+you can exercise a changed skill without publishing. Nothing reaches other sessions
+until the publish below.
+
+## 4. Publish
 
 1. Bump the version: `sh bumpVersion.sh wingman [patch|minor|major]` — never edit
    version fields by hand; it updates all three manifests and verifies they agree.

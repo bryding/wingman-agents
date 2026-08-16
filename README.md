@@ -60,7 +60,10 @@ Skills live at `plugins/wingman/skills/<name>/SKILL.md` (frontmatter: `name:`,
 Installed plugins are served from a per-version cache, so editing a file here does nothing to
 live sessions until you publish:
 
-1. Edit under `plugins/wingman/`.
+1. Edit under `plugins/wingman/`, and **test before publishing**: `claude plugin validate
+   ./plugins/wingman --strict` for structure, and `claude --plugin-dir ./plugins/wingman` to
+   load the edited plugin in a live session without publishing anything (it shadows the
+   installed copy for that session only).
 2. `sh bumpVersion.sh wingman [patch|minor|major]` — never edit version fields by hand; it
    updates all three manifests that record the version and verifies they agree
    (`--check` audits without bumping).
