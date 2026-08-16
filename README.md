@@ -31,8 +31,8 @@ a stale clone), `--remove`, `--help`.
 
 | Component | Contents |
 |---|---|
-| Skills | `wingman-review` (Sonnet-pinned multi-agent diff review), `handoff` / `resumeFromHandoff` (the context-clear loop around the machine-local `local-handoff.md` baton), `docs-update` (repo documentation audit), `publish-harness` (how to edit and publish anything in this repo) |
-| Roles (Claude Code only) | `Explore`, `scout`, `mech-executor`, `verifier` — the pinned cheap-model delegation workers routed by wingman's `AGENTS.md` |
+| Skills | `wingman-review` (Sonnet-pinned multi-agent diff review), `deep-think` (hand a hard open problem to `deep-thinker` with an unanchored brief), `handoff` / `resumeFromHandoff` (the context-clear loop around the machine-local `local-handoff.md` baton), `docs-update` (repo documentation audit), `publish-harness` (how to edit and publish anything in this repo) |
+| Roles (Claude Code only) | `Explore`, `scout`, `mech-executor`, `verifier` — the pinned cheap-model delegation workers routed by wingman's `AGENTS.md` — plus `deep-thinker` (Fable @ high effort, the one deliberately expensive role; used only via `deep-think`) |
 
 Skill invocations are namespaced: `/wingman:handoff`, `/wingman:wingman-review`, and so on.
 
@@ -76,8 +76,10 @@ session in any repo knows to come here.
 
 Roles pin model **aliases**, which float to the current generation (`haiku` → current Haiku,
 `sonnet` → current Sonnet): `Explore`/`scout`/`verifier` = haiku @ low effort,
-`mech-executor` = sonnet @ medium. `wingman-review` pins its worker agents to `sonnet` purely
-for cost. Codex-side pins live in the wingman repo's `.codex/agents/*.toml`.
+`mech-executor` = sonnet @ medium, `deep-thinker` = fable @ high (the premium tier, on purpose
+— it exists for the few problems worth it; everything else stays cheap). `wingman-review` pins
+its worker agents to `sonnet` purely for cost. Codex-side pins live in the wingman repo's
+`.codex/agents/*.toml`.
 
 Two open questions, deliberately recorded rather than guessed (per Anthropic's guidance to
 re-run effort sweeps per model generation, reaching for lower *effort* before a cheaper

@@ -1,7 +1,7 @@
 {
   "name": "wingman",
-  "version": "1.0.0",
-  "description": "Wingman development harness skills — multi-agent diff review, handoff/resume, documentation upkeep, and harness publishing. Subagent roles ship alongside for Claude Code only; Codex loads its roles from the wingman repo's .codex/agents/.",
+  "version": "1.1.0",
+  "description": "Wingman development harness skills — multi-agent diff review, deep thinking, handoff/resume, documentation upkeep, and harness publishing. Subagent roles ship alongside for Claude Code only; Codex loads its roles from the wingman repo's .codex/agents/.",
   "skills": [
     "./skills/"
   ]

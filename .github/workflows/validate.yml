@@ -92,6 +92,9 @@ jobs:
           grep -q "exactly" plugins/wingman/agents/verifier.md
           grep -qi "advisory-only" plugins/wingman/skills/handoff/SKILL.md
           grep -qi "safety" plugins/wingman/skills/publish-harness/SKILL.md
+          grep -qi "advisory-only" plugins/wingman/agents/deep-thinker.md
+          grep -q "PROPOSE only" plugins/wingman/agents/deep-thinker.md
+          grep -qi "safety" plugins/wingman/skills/deep-think/SKILL.md
 
       - name: Dead references
         run: |
