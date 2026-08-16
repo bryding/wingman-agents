@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wingman-agents",
+  "description": "Wingman agent tooling — harness skills and delegation roles shared across every clone and worktree of the wingman repo.",
+  "owner": {
+    "name": "Wingman"
+  },
+  "plugins": [
+    {
+      "name": "wingman",
+      "description": "Wingman development harness: four delegation roles (Explore, scout, mech-executor, verifier) plus the skills for multi-agent diff review, handoff/resume, documentation upkeep, and publishing harness changes.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Wingman"
+      },
+      "source": "./plugins/wingman",
+      "category": "development"
+    }
+  ]
+}

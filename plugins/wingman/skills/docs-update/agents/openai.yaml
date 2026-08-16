@@ -1,0 +1,4 @@
+interface:
+  display_name: "Docs Update"
+  short_description: "Audit and refresh repository documentation"
+  default_prompt: "Use $docs-update to audit and refresh all repository documentation."
