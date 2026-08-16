@@ -78,6 +78,21 @@ jobs:
           done
           exit $fail
 
+      - name: Safety language present
+        # Wingman is advisory-only aviation software. The skills and roles here
+        # carry its load-bearing safety text; an edit that drops it must fail
+        # CI, because the wingman repo can no longer see these files. Mirrors
+        # the advisory-only greps in wingman's own ci.yml.
+        run: |
+          set -eu
+          grep -q "SAFETY AND DATA GUARDRAIL" plugins/wingman/agents/mech-executor.md
+          grep -qi "advisory-only" plugins/wingman/skills/wingman-review/SKILL.md
+          grep -q "callsigns" plugins/wingman/agents/Explore.md
+          grep -q "callsigns" plugins/wingman/agents/scout.md
+          grep -q "exactly" plugins/wingman/agents/verifier.md
+          grep -qi "advisory-only" plugins/wingman/skills/handoff/SKILL.md
+          grep -qi "safety" plugins/wingman/skills/publish-harness/SKILL.md
+
       - name: Dead references
         run: |
           set -eu
